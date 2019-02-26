@@ -1,0 +1,361 @@
+---
+title: 'Visual Analytic: Exercise UNI'
+author: "Quinhas Fernandes"
+date: "1/16/2019"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+library(uwIntroStats)
+library(ggplot2)
+library(tidyverse)
+library(dplyr)
+library(readr)
+library(foreign)
+library(haven)
+
+load(file = url('https://github.com/EvansDataScience/data/raw/master/eduwa.rda'))
+
+link="https://github.com/quinhasf/pubpol-599/raw/master/ape_analysis.dta"
+
+chw_fp <- read_dta(url(link))
+
+library(ggplot2)
+```
+
+
+```{r include=FALSE, results='hold'}
+
+absoluteT=table(eduwa$LocaleType,exclude = 'nothing')
+
+ToPlot=prop.table(absoluteT)
+
+names(ToPlot)[5]='Unknown'
+
+ToPlot=ToPlot*100 # preparing labels
+
+ToPlot
+```
+
+
+```{r include=FALSE, results='hold'}
+titleText='Where are Public Schools located in WA in 2019?'
+sourceText='Source: US Department of Education'
+```
+
+
+```{r echo=FALSE, fig.show='hide'}
+plotLabels=paste0(round(ToPlot,2),'%')
+
+par(mgp=c(1,0.5,0)) 
+location=barplot(ToPlot,
+         col = 'gray',
+         border=NA,
+         main=titleText,
+         xlim=c(0,50), 
+         xlab = '(in %)',
+         cex.names=0.6,
+         cex.lab=0.6,
+         las=2,
+         horiz = T,
+         xaxt="n") # no x-axis, so I customize it below...
+
+text(x=ToPlot,y=location,labels=plotLabels,pos = 4,cex = 0.7) 
+title(sub=sourceText, adj=0,cex.sub=0.7,line = 3) 
+
+#reference line
+abline(v=25,lty=3,lwd=3)
+
+
+# customizing tick values
+newXvalues<-c(0,10,25,40,50) # you just want to show this on the axis
+axis(side=1, 
+     at=newXvalues, 
+     labels = newXvalues,
+     cex.axis=0.8)
+```
+
+
+```{r include=FALSE, results='hold'}
+tableFreq=as.data.frame(ToPlot)
+names(tableFreq)=c("locale","pct")
+#you have:
+tableFreq
+```
+
+
+```{r fig.show='hide', include=FALSE}
+library(ggplot2)
+
+#base GGPLOT2 starts with a "base", telling WHAT VARIABLES TO PLOT
+base= ggplot(data = tableFreq, 
+             aes(x = locale,
+                 y = pct)) 
+
+plot1 = base + geom_bar(fill ="gray",
+                        stat = 'identity') # y is just what it is!
+
+plot2 = plot1 + labs(title=titleText,
+                     x =NULL, 
+                     y = NULL,
+                     caption = sourceText)
+
+plot3 = plot2 + geom_hline(yintercept = 25, #where
+                           linetype="dashed", 
+                           size=1.5, #thickness
+                           alpha=0.5) #transparency
+library(scales)
+
+# customize Y axis
+plot4 = plot3 + scale_y_continuous(breaks=c(0,10, 25,40,50),
+                                 limits = c(0, 50),
+                                 labels=scales::unit_format(suffix = '%')) 
+plot5 = plot4 + theme(panel.background = element_rect(fill = "white",
+                                                    colour = "grey50"),
+                    plot.caption = element_text(hjust = 0), # default was 1
+                    plot.title = element_text(hjust = 0.5))
+
+plot6 = plot5 + geom_text(aes(y = pct ,
+                            label = paste0(round(pct,2), '%')),
+                        vjust=1, # if flipping 'hjust'
+                        size = 3)
+
+plot6
+```
+
+
+```{r include=FALSE, results='hold'}
+plot6 + coord_flip()
+```
+
+This is what I want:
+
+
+```{r echo=FALSE, results='hold'}
+ToPlotOrd=sort(ToPlot)
+
+par(mgp=c(1,0.5,0)) # distance label, tickText,tick
+location=barplot(ToPlotOrd,
+         col = 'gray',
+         border=NA,
+         main=titleText,
+         xlim=c(0,50), 
+         xlab = '(in %)',
+         horiz = T,
+         cex.names = 0.7,
+         cex.lab=0.6,
+         xaxt="n") # no x-axis, so I customize it below...
+
+text(x=ToPlotOrd,y=location,labels=plotLabels,pos = 2,cex = 0.7) 
+title(sub=sourceText, adj=0,cex.sub=0.7,line = 3) 
+
+# reference line
+abline(v=25,lty=3,lwd=3)
+
+# customizong tick values
+xtick<-c(0,10,25,40,50)
+axis(side=1, at=xtick, labels = xtick,cex.axis=0.8)
+```
+
+
+But in GGPLOT… (exercise 1Use ggplot to show a bar plot ordered by share size.)
+
+```{r include=FALSE, results='hold'}
+tableFreq[order(-tableFreq$pct),]
+```
+
+
+```{r echo=TRUE, fig.show='hold'}
+
+#base GGPLOT2 starts with a "base", telling WHAT VARIABLES TO PLOT
+base= ggplot(data = tableFreq, 
+              aes(x = reorder(locale, pct),
+                 y = pct))
+
+plot1 = base + geom_bar(fill ="gray",
+                        stat = 'identity') # y is just what it is!
+
+plot2 = plot1 + labs(title=titleText,
+                     x =NULL, 
+                     y = NULL,
+                     caption = sourceText)
+
+plot3 = plot2 + geom_hline(yintercept = 25, #where
+                           linetype="dashed", 
+                           size=1.5, #thickness
+                           alpha=0.5) #transparency
+library(scales)
+
+# customize Y axis
+plot4 = plot3 + scale_y_continuous(breaks=c(0,10, 25,40,50),
+                                 limits = c(0, 50),
+                                 labels=scales::unit_format(suffix = '%')) 
+plot5 = plot4 + theme(panel.background = element_rect(fill = "white",
+                                                    colour = "grey50"),
+                    plot.caption = element_text(hjust = 0), # default was 1
+                    plot.title = element_text(hjust = 0.5))
+
+plot6 = plot5 + geom_text(aes(y = pct ,
+                            label = paste0(round(pct,2), '%')),
+                        vjust=1, # if flipping 'hjust'
+                        size = 3)
+
+plot7 = plot6 + coord_flip()
+
+plot7
+```
+
+Exercise Lolliplot
+
+
+```{r ggplot, include=FALSE}
+chw_pf1 <- data.frame(chw_fp[c('province', 'ape_contrib')])
+
+tableFreq=as.data.frame(chw_pf1)
+
+names(tableFreq)=c("province","ape_contrib")
+
+tableFreqO=tableFreq[order(tableFreq$ape_contrib),]
+
+tableFreqO$gap=tableFreqO$ape_contrib-10
+```
+
+
+```{r lolliplot, echo=TRUE, fig.show='hold'}
+
+tableFreqO$Target=ifelse(tableFreqO$gap>0,"Above Target","Below Target")
+
+base = ggplot(tableFreqO, aes(province,gap,color=Target,
+                              label = round(gap,1))) 
+lolliplot1=base + geom_segment(aes(y =0, 
+                                   x = province, 
+                                   yend = gap, 
+                                   xend = province)) 
+lolliplot2=lolliplot1 + geom_point()
+
+lolliplot3= lolliplot2 + scale_x_discrete(limits=tableFreqO$province) 
+
+lollitplot4 = lolliplot3 + geom_text(nudge_x=0.3, nudge_y=0.1,show.legend = F) +
+              labs(title = "Mozambique Community Health Workers contribuition on Family Planning",
+                   subtitle = "2017 province level gap on CHW contribuition",
+                    x ="Province", 
+                    y = "% points of the FP GAP",
+                    caption = "Fig.1: Represents each province contribuition to achieve the 10% target (centered at 0) in 2017 (Gap analysis).
+Provinces are ploted from low to high perfomance.
+
+Source:HIS") +
+            theme(panel.background = element_rect(fill = "gray98",
+                                                    colour = "black"),
+                    plot.caption = element_text(hjust = 0), 
+                    plot.title = element_text(hjust = 0.5),
+                    plot.subtitle = element_text(hjust=0.5),
+                    legend.box.just = c("right","center"), 
+                    axis.text.x = element_text(size=7, angle = 45, vjust = 1, hjust=1)) +
+              geom_hline(yintercept=0,
+                    linetype="dashed",
+                    color = "black",
+                    size= 0.9,
+                    alpha= 0.8)
+
+
+lollitplot4 
+```
+
+
+Class Exercise: Make sure our box plot follows the same design approach and include all the elements as in the bar plot for nominal data
+
+```{r ordinalTable, include=FALSE}
+table(eduwa$High.Grade,exclude = 'nothing')
+```
+
+```{r tableAsDF, include=FALSE}
+frqTabO=as.data.frame(prop.table(table(eduwa$High.Grade)))
+names(frqTabO)=c('grade','pct')
+frqTabO
+```
+
+```{r echo=TRUE}
+box1 = ggplot(eduwa, aes(y=as.numeric(High.Grade))) 
+box1 = box1 + geom_boxplot(varwidth=T, fill="grey50") + coord_flip() 
+
+ordLabels= levels(eduwa$High.Grade)
+
+box2 = box1 + scale_y_continuous(labels=ordLabels,breaks=1:15)
+
+box3 = box2 + 
+    labs(title="2017 King County Students Grade Distribution", 
+         subtitle="Box-plot of students high-grade distribution",
+         caption="Source: Seattle Public Schools",
+         y="Schools Grade") +
+   theme(panel.background = element_rect(fill = "white",
+                                                    colour = "grey50"),
+                    plot.caption = element_text(hjust = 0), 
+                    plot.title = element_text(hjust = 0.5),
+                  plot.subtitle = element_text(hjust=0.5)) +
+  theme(axis.title.y=element_blank(),
+        axis.text.y=element_blank(),
+        axis.ticks.y=element_blank()) 
+box3
+```
+
+Class Exercise: Make a histogram for the variable FREE LUNCH, and make sure it has all the right elements, and get rid of unnecessary elements.
+
+```{r echo=TRUE}
+
+eduwa3=eduwa[complete.cases(eduwa$Reduced.Lunch),]
+
+#ggplot
+base= ggplot(eduwa3,aes(x = Free.Lunch))  
+hist1= base + geom_histogram(binwidth = 100,boundary=0, fill="gray20") #changing width
+hist2= hist1 + stat_bin(binwidth = 100, aes(label=..count..), 
+                  geom = "text",boundary = 0,vjust=-0.5) +
+                  labs(title="2017 Schools distribuition of Free Lunch", 
+                           subtitle="Histogram of frequencies",
+                       caption = "Source: Seattle Public Schools",
+                       x= "Free Lunch",
+                       y="Number of meals (counts)") +
+                       xlim(c(0, 1800)) +
+                 scale_x_continuous(breaks = c(0, 400, 800, 1200, 1600))
+hist2
+```
+
+Class Exercise: Do some research and make a histogram and a density plot using ggplot for the variable we just used above.
+
+```{r removeMissing2, include=FALSE}
+
+eduwa4=eduwa[complete.cases(eduwa$Student.Teacher.Ratio),]
+
+meanValues=tapply(eduwa4$Student.Teacher.Ratio, 
+                  eduwa4$County, 
+                  mean)
+eduwa5 = as.data.frame(meanValues)
+```
+
+## histogram
+
+```{r echo=TRUE}
+#ggplot
+base1= ggplot(eduwa5,aes(x=meanValues)) 
+histogram1= base1 + geom_histogram( binwidth = 2,boundary=0, fill="turquoise3") 
+histogram2= histogram1 + stat_bin(binwidth = 2, aes(label=..count..), 
+                  geom = "text",boundary = 0,vjust=-0.5) +
+                  labs(title="2017 Schools students teacher ratio", 
+                       caption = "Source: Seattle Public Schools",
+                       x= "Mean Students Teacher ratio",
+                       y="Frequency") +
+                       xlim(c(10, 24)) +
+          scale_x_continuous(breaks = c(10,12,14, 16, 18,20, 22, 24)) +
+          geom_vline(aes(xintercept= mean(meanValues), 
+                         linetype = "mean"), 
+                        colour= 'red') +
+          geom_vline(aes(xintercept= median(meanValues), 
+                         linetype = "median"), 
+                         colour= 'blue') +
+          scale_linetype_manual(name = "LEGEND", values = c(2, 2), 
+                       guide = guide_legend(override.aes = list(color = c("blue", "red")))) +
+          theme(legend.justification =c(lty=0.5,lwd=0.5))
+                
+histogram2
+```
